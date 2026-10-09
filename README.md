@@ -3,7 +3,7 @@
 A full-stack Typeform-style form builder built for the SDE Fullstack Assignment. Creators can design and publish forms, respondents complete a conversational one-question-at-a-time flow, and creators review persisted submissions.
 
 - **Source:** [GitHub repository](https://github.com/kartikjuneja05/scalar-ai-typeform-clone)
-- **Hosted demo:** Deployment URL pending.
+- **Hosted demo:** [iLoveForms](https://scalar-ai-typeform-clone.vercel.app/)
 
 ## Features
 
