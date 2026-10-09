@@ -1,0 +1,18 @@
+node_modules/
+.next/
+.venv/
+__pycache__/
+*.pyc
+*.sqlite3
+*.tsbuildinfo
+.env*
+!.env.example
+
+# Personal explanation documents stay local and must not be published.
+/docs/
+*.docx
+*.pdf
+*.sqlite3-wal
+*.sqlite3-shm
+.vercel/
+.DS_Store
