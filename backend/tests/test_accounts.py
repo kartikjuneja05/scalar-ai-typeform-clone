@@ -96,6 +96,30 @@ class AccountTests(unittest.TestCase):
         for payload in ({"name":" ","email":"valid@example.com","password":"12345678"},{"name":"Alex","email":"invalid","password":"12345678"},{"name":"Alex","email":"valid@example.com","password":"short"}):
             self.assertEqual(other.post("/api/auth/register",json=payload).status_code,422)
 
+    def test_new_accounts_receive_private_starter_drafts_once(self):
+        other = TestClient(main.app)
+        self.assertEqual(self.register(other, email="new@example.com").status_code, 201)
+        forms = other.get("/api/forms").json()
+        self.assertEqual({f["title"] for f in forms}, {"A little about you", "Customer happiness check-in"})
+        self.assertEqual(len(forms), 2)
+        for form in forms:
+            self.assertEqual(form["status"], "draft")
+            self.assertEqual(form["response_count"], 0)
+            self.assertEqual(len(form["questions"]), 5)
+            self.assertEqual(self.client.get(f"/api/forms/{form['id']}").status_code, 404)
+            self.assertEqual(self.client.get(f"/api/public/{form['id']}").status_code, 404)
+        other.delete(f"/api/forms/{forms[0]['id']}")
+        other.post("/api/auth/logout")
+        other.post("/api/auth/login", json={"email": "new@example.com", "password": "correct-horse-42"})
+        main.initialize()
+        self.assertEqual(len(other.get("/api/forms").json()), 1)
+
+    def test_registration_does_not_duplicate_inherited_samples(self):
+        before = self.client.get("/api/forms").json()
+        self.assertEqual(self.register().status_code, 201)
+        after = self.client.get("/api/forms").json()
+        self.assertEqual({f["id"] for f in after}, {f["id"] for f in before})
+
     def test_expired_sessions_do_not_expose_account_forms(self):
         f=self.form();self.register();token=self.client.cookies.get(auth.COOKIE)
         with main.db() as c:

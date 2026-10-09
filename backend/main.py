@@ -191,6 +191,86 @@ def validate(form, answers):
         raise HTTPException(422, errors)
 
 
+def starter_forms():
+    return [
+        (
+            "A little about you",
+            "sage",
+            [
+                Question(
+                    id="name",
+                    title="First things first, what’s your name?",
+                    required=True,
+                ),
+                Question(
+                    id="email",
+                    type="email",
+                    title="And your email address?",
+                    description="Just so we can keep in touch.",
+                    required=True,
+                ),
+                Question(
+                    id="role",
+                    type="multiple_choice",
+                    title="What brings you here?",
+                    options=["Design", "Engineering", "Product", "Something else"],
+                    required=True,
+                ),
+                Question(
+                    id="rating",
+                    type="rating",
+                    title="How was your first impression?",
+                    required=True,
+                ),
+                Question(
+                    id="notes",
+                    type="long_text",
+                    title="Anything else you’d like us to know?",
+                ),
+            ],
+        ),
+        (
+            "Customer happiness check-in",
+            "lavender",
+            [
+                Question(
+                    id="satisfaction",
+                    type="rating",
+                    title="How happy are you with your experience?",
+                    required=True,
+                ),
+                Question(
+                    id="recommend",
+                    type="yes_no",
+                    title="Would you recommend us to a friend?",
+                    required=True,
+                ),
+                Question(
+                    id="frequency",
+                    type="dropdown",
+                    title="How often do you use our product?",
+                    options=[
+                        "Every day",
+                        "A few times a week",
+                        "Once a week",
+                        "Occasionally",
+                    ],
+                ),
+                Question(
+                    id="team",
+                    type="number",
+                    title="How many people are on your team?",
+                ),
+                Question(
+                    id="feedback",
+                    type="long_text",
+                    title="What could we do better?",
+                ),
+            ],
+        ),
+    ]
+
+
 def initialize():
     Path(DB).parent.mkdir(parents=True, exist_ok=True)
     with db() as c:
@@ -211,83 +291,7 @@ def initialize():
         c.execute("INSERT INTO app_meta VALUES('seed_initialized', '1')")
         if c.execute("SELECT COUNT(*) FROM forms").fetchone()[0]:
             return
-        seeds = [
-            (
-                "A little about you",
-                "sage",
-                [
-                    Question(
-                        id="name",
-                        title="First things first, what’s your name?",
-                        required=True,
-                    ),
-                    Question(
-                        id="email",
-                        type="email",
-                        title="And your email address?",
-                        description="Just so we can keep in touch.",
-                        required=True,
-                    ),
-                    Question(
-                        id="role",
-                        type="multiple_choice",
-                        title="What brings you here?",
-                        options=["Design", "Engineering", "Product", "Something else"],
-                        required=True,
-                    ),
-                    Question(
-                        id="rating",
-                        type="rating",
-                        title="How was your first impression?",
-                        required=True,
-                    ),
-                    Question(
-                        id="notes",
-                        type="long_text",
-                        title="Anything else you’d like us to know?",
-                    ),
-                ],
-            ),
-            (
-                "Customer happiness check-in",
-                "lavender",
-                [
-                    Question(
-                        id="satisfaction",
-                        type="rating",
-                        title="How happy are you with your experience?",
-                        required=True,
-                    ),
-                    Question(
-                        id="recommend",
-                        type="yes_no",
-                        title="Would you recommend us to a friend?",
-                        required=True,
-                    ),
-                    Question(
-                        id="frequency",
-                        type="dropdown",
-                        title="How often do you use our product?",
-                        options=[
-                            "Every day",
-                            "A few times a week",
-                            "Once a week",
-                            "Occasionally",
-                        ],
-                    ),
-                    Question(
-                        id="team",
-                        type="number",
-                        title="How many people are on your team?",
-                    ),
-                    Question(
-                        id="feedback",
-                        type="long_text",
-                        title="What could we do better?",
-                    ),
-                ],
-            ),
-        ]
+        seeds = starter_forms()
         for index, (title, theme, questions) in enumerate(seeds):
             f = create(c, FormInput(title=title, theme=theme, questions=questions))
             publish(c, f["id"])
@@ -357,7 +361,14 @@ def session(creator: auth.Creator = Depends(current_creator)):
 @app.post("/api/auth/register", status_code=201)
 def register(data: auth.Registration, request: Request, response: CookieResponse):
     with db() as c:
-        return auth.register(c, request, response, data)
+        profile = auth.register(c, request, response, data)
+        # Registration rotates the cookie, so resolve the account by its validated email.
+        owner_id = c.execute("SELECT id FROM creators WHERE email=?", (data.email,)).fetchone()["id"]
+        for title, theme, questions in starter_forms():
+            # Keep inherited sample forms rather than adding copies with identical titles.
+            if not c.execute("SELECT 1 FROM forms WHERE owner_id=? AND title=?", (owner_id, title)).fetchone():
+                create(c, FormInput(title=title, theme=theme, questions=questions), owner_id=owner_id)
+        return profile
 
 
 @app.post("/api/auth/login")

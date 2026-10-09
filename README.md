@@ -77,7 +77,7 @@ Open [localhost:3000](http://localhost:3000). Interactive API documentation is a
 
 The backend reads process environment variables; `backend/.env.example` is a reference and is not automatically loaded. Restart the backend after changing its configuration. Redeploy the frontend after changing `API_URL`, because it configures build-time rewrites.
 
-On first initialization, the database seeds **two published forms, one draft, and ten responses**. The first guest workspace receives the sample forms. Samples are not recreated after deletion or on subsequent restarts.
+On first initialization, the database seeds **two published forms, one draft, and ten responses**. The first guest workspace receives the sample forms. Samples are not recreated after deletion or on subsequent restarts. New accounts receive two editable starter drafts: “A little about you” and “Customer happiness check-in,” with five questions each and no sample responses. Inherited forms with those titles are kept instead of duplicated; signing in again does not recreate deleted starters.
 
 ### Suggested evaluation flow
 
@@ -103,7 +103,7 @@ npm run typecheck
 npm run build
 ```
 
-The backend suite contains 17 tests covering form operations, publication, validation, response persistence, CSV export, authentication, session behavior, ownership isolation, and legacy database initialization. GitHub Actions runs backend tests, frontend type checking, and the production build.
+The backend suite contains 19 tests covering form operations, publication, validation, response persistence, CSV export, authentication, session behavior, ownership isolation, and legacy database initialization. GitHub Actions runs backend tests, frontend type checking, and the production build.
 
 ## Architecture overview
 
