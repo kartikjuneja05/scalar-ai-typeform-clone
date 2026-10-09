@@ -185,7 +185,3 @@ Creator routes accept guest or registered sessions and restrict access to the cu
 - Logic branching, integrations/webhooks, collaboration, payments, file uploads, and AI generation are placeholders or outside this implementation. Dark mode is not implemented.
 - Email verification, password reset, and login abuse limits are not implemented. Automated browser coverage and full modal focus trapping remain improvements.
 - SQLite hosting uses one backend instance and a persistent disk. Startup includes initial schema creation and the account migration; there is no general migration framework. `backend/backup_db.py` creates consistent SQLite backups.
-
-## Hosting
-
-See [HOSTING.md](HOSTING.md) for deployment instructions. The repository includes a Render Blueprint (`render.yaml`) for the FastAPI service and persistent disk. Deploy the `frontend` directory on Vercel and set `API_URL` to the deployed backend origin.
