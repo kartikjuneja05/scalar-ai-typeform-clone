@@ -16,3 +16,5 @@ __pycache__/
 *.sqlite3-shm
 .vercel/
 .DS_Store
+
+HOSTING.md
