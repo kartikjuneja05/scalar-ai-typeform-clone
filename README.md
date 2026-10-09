@@ -163,7 +163,7 @@ The endpoints below are prefixed with `/api`. Full request/response schemas are 
 | POST | `/auth/register` | Register with `{name, email, password}` and preserve guest forms |
 | POST | `/auth/login` | Sign in with `{email, password}` |
 | POST | `/auth/logout` | Revoke the current session and start a guest workspace |
-| GET / POST | `/forms` | List owned forms / create a form |
+| GET / POST | `/forms` | List owned forms / create acle form |
 | GET / PUT / DELETE | `/forms/{id}` | Read / save / delete an owned form |
 | POST | `/forms/{id}/duplicate` | Duplicate into a draft without responses |
 | POST | `/forms/{id}/publish` | Publish a versioned snapshot |
@@ -180,8 +180,11 @@ Creator routes accept guest or registered sessions and restrict access to the cu
 
 - Guests can build forms without registering. Their workspace depends on retaining the session cookie; accounts provide access across browsers. Existing unowned forms are assigned to the first guest opening an installation after the account migration.
 - Saving is explicit; leaving the editor saves pending changes. Concurrent creator edits can overwrite each other.
-- Completed submissions persist. Partial answers stay in browser memory; partial-response tracking and completion rates are not implemented.
+- Completed submissions are stored in SQLite; durability depends on the hosting storage described below. Partial answers stay in browser memory; partial-response tracking and completion rates are not implemented.
 - Summary counts aggregate by question ID across publication versions. Responses have no pagination or submission idempotency mechanism.
 - Logic branching, integrations/webhooks, collaboration, payments, file uploads, and AI generation are placeholders or outside this implementation. Dark mode is not implemented.
 - Email verification, password reset, and login abuse limits are not implemented. Automated browser coverage and full modal focus trapping remain improvements.
-- SQLite hosting uses one backend instance and a persistent disk. Startup includes initial schema creation and the account migration; there is no general migration framework. `backend/backup_db.py` creates consistent SQLite backups.
+- Render's free tier has no persistent disk; SQLite accounts, forms, responses, and sessions are lost when the backend restarts, redeploys, or spins down.
+- Render's free backend sleeps after 15 minutes of inactivity; the first connection can take about a minute while it wakes up ([Render documentation](https://render.com/docs/free)).
+- SQLite uses one backend instance; durable hosting requires persistent storage, available through a paid Render service.
+- Startup creates the schema and applies the account migration; there is no general migration framework. `backend/backup_db.py` creates consistent backups, which must be copied off the service to survive free-tier storage loss.
